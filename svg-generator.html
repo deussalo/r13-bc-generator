@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blair Business Card Generator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load qr-code-styling for styled QR code generation -->
+    <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    <!-- Configure Tailwind and load Exo font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Exo:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1f1f1f;
+            transition: background-color 0.3s ease;
+        }
+        body.light-mode {
+            background-color: #f7f9fb;
+        }
+        .dark-card {
+            background-color: #2d2d2d;
+            color: #e5e5e5;
+        }
+        body.light-mode .dark-card {
+            background-color: #ffffff;
+            color: #1f2937;
+        }
+        .dark-input {
+            background-color: #3d3d3d;
+            border-color: #4d4d4d;
+            color: #e5e5e5;
+        }
+        .dark-input::placeholder {
+            color: #888888;
+        }
+        body.light-mode .dark-input {
+            background-color: #ffffff;
+            border-color: #d1d5db;
+            color: #1f2937;
+        }
+        .dark-label {
+            color: #c5c5c5;
+        }
+        body.light-mode .dark-label {
+            color: #374151;
+        }
+        .dark-heading {
+            color: #ffffff;
+        }
+        body.light-mode .dark-heading {
+            color: #111827;
+        }
+        .dark-subheading {
+            color: #a0a0a0;
+        }
+        body.light-mode .dark-subheading {
+            color: #4b5563;
+        }
+        .dark-border {
+            border-color: #4d4d4d;
+        }
+        body.light-mode .dark-border {
+            border-color: #e5e7eb;
+        }
+        /* Custom CSS to enforce business card aspect ratio and size */
+        .card-container {
+            width: 100%;
+            /* 256x156 aspect ratio matching the SVG template */
+            padding-bottom: 60.94%; /* (156 / 256) * 100 */
+            position: relative;
+            max-width: 530px; /* Maximize readability on smaller screens */
+            margin: 0 auto;
+        }
+        .svg-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        /* Back card container - 90x55 aspect ratio */
+        .back-card-container {
+            width: 100%;
+            padding-bottom: 61.11%; /* (55 / 90) * 100 */
+            position: relative;
+            max-width: 530px;
+            margin: 0 auto;
+        }
+        /* Hide QR code generator div - use opacity instead of position to ensure rendering */
+        #qr-generator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto dark-card shadow-xl rounded-xl p-6 lg:p-10 transition-all duration-300">
+        <div class="flex justify-between items-center mb-2">
+            <h1 class="text-3xl font-bold dark-heading">R13 Business Card Generator</h1>
+            <!-- Night Mode Toggle -->
+            <button id="theme-toggle" class="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors" title="Toggle Light/Dark Mode">
+                <svg id="moon-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+                <svg id="sun-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+            </button>
+        </div>
+        <p class="dark-subheading mb-8">Enter employee details to generate customized PNG files for printing.</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+            <!-- Input Form -->
+            <div class="space-y-6">
+                <h2 class="text-xl font-semibold dark-heading border-b dark-border pb-2 mb-4">Employee Details</h2>
+
+                <!-- Name Input -->
+                <div class="flex flex-col">
+                    <label for="input-name" class="text-sm font-medium dark-label mb-1">Full Name</label>
+                    <input type="text" id="input-name" value="Blair Rainey" placeholder="Full Name"
+                           class="p-3 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                </div>
+
+                <!-- Title Input -->
+                <div class="flex flex-col">
+                    <label for="input-title" class="text-sm font-medium dark-label mb-1">Position</label>
+                    <input type="text" id="input-title" value="Director" placeholder="Position"
+                           class="p-3 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                </div>
+
+                <!-- Phone Input -->
+                <div class="flex flex-col">
+                    <label for="input-phone" class="text-sm font-medium dark-label mb-1">Phone Number</label>
+                    <input type="tel" id="input-phone" value="+61 481 255 653" placeholder="+61 XXX XXX XXX"
+                           class="p-3 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                </div>
+
+                <!-- Email Input -->
+                <div class="flex flex-col">
+                    <label for="input-email" class="text-sm font-medium dark-label mb-1">Email Address</label>
+                    <input type="email" id="input-email" value="blair@r13.ai" placeholder="email@r13.ai"
+                           class="p-3 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                </div>
+
+                <!-- Website Input -->
+                <div class="flex flex-col">
+                    <label for="input-website" class="text-sm font-medium dark-label mb-1">Website</label>
+                    <input type="text" id="input-website" value="www.r13.ai" placeholder="www.r13.ai"
+                           class="p-3 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                </div>
+
+                <!-- QR Code Styling Section -->
+                <div class="border-t dark-border pt-4 mt-4">
+                    <h3 class="text-lg font-semibold dark-heading mb-3">QR Code Style</h3>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Dot Style -->
+                        <div class="flex flex-col">
+                            <label for="qr-dot-style" class="text-sm font-medium dark-label mb-1">Dot Style</label>
+                            <select id="qr-dot-style" class="p-2 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500">
+                                <option value="square">Square</option>
+                                <option value="dots">Dots</option>
+                                <option value="rounded">Rounded</option>
+                                <option value="classy">Classy</option>
+                                <option value="classy-rounded" selected>Classy Rounded</option>
+                                <option value="extra-rounded">Extra Rounded</option>
+                            </select>
+                        </div>
+
+                        <!-- Corner Square Style -->
+                        <div class="flex flex-col">
+                            <label for="qr-corner-square" class="text-sm font-medium dark-label mb-1">Corner Squares</label>
+                            <select id="qr-corner-square" class="p-2 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500">
+                                <option value="square" selected>Square</option>
+                                <option value="dot">Dot</option>
+                                <option value="extra-rounded">Extra Rounded</option>
+                            </select>
+                        </div>
+
+                        <!-- Corner Dot Style -->
+                        <div class="flex flex-col">
+                            <label for="qr-corner-dot" class="text-sm font-medium dark-label mb-1">Corner Dots</label>
+                            <select id="qr-corner-dot" class="p-2 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500">
+                                <option value="square" selected>Square</option>
+                                <option value="dot">Dot</option>
+                            </select>
+                        </div>
+
+                        <!-- QR Color -->
+                        <div class="flex flex-col">
+                            <label for="qr-color" class="text-sm font-medium dark-label mb-1">QR Color</label>
+                            <input type="color" id="qr-color" value="#000000"
+                                   class="p-1 h-10 border rounded-lg dark-input cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Download Button -->
+                <button id="download-btn"
+                        class="w-full mt-8 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 transform hover:scale-[1.01] flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download Front &amp; Back PNG
+                </button>
+            </div>
+
+            <!-- SVG Preview Area -->
+            <div class="bg-gray-800 p-4 rounded-xl shadow-inner flex flex-col">
+                <h2 class="text-xl font-semibold dark-heading border-b dark-border pb-2 mb-4">Live Preview</h2>
+
+                <!-- Card Container with Aspect Ratio -->
+                <div class="card-container flex-grow">
+                    <!-- The SVG will be injected here -->
+                    <div id="svg-output" class="svg-preview rounded-lg overflow-hidden shadow-2xl">
+                        <!-- Blair Business Card - SVG background with text overlay -->
+                        <svg id="business-card-svg" viewBox="0 0 256 156" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                            <!-- SVG Background Template -->
+                            <image href="r13-bc-front-bg.png" width="256" height="156" preserveAspectRatio="xMidYMid slice"/>
+
+                            <!-- Employee Name -->
+                            <text id="card-name" x="17" y="28" font-family="'Exo', sans-serif" font-size="17" font-weight="700" fill="#000000">
+                                Blair Rainey
+                            </text>
+
+                            <!-- Employee Title/Position -->
+                            <text id="card-title" x="17" y="41" font-family="'Exo', sans-serif" font-size="9" font-weight="400" fill="#000000">
+                                Director
+                            </text>
+
+                            <!-- Phone Icon and Number -->
+                            <image href="icons/Phone.svg" x="17" y="82.5" width="10" height="10"/>
+                            <text id="card-phone" x="32" y="92" font-family="'Exo', sans-serif" font-size="9" font-weight="500" fill="#000000">
+                                +61 481 255 653
+                            </text>
+
+                            <!-- Email Icon and Address -->
+                            <image href="icons/Mail.svg" x="17" y="100.5" width="10" height="10"/>
+                            <text id="card-email" x="32" y="110" font-family="'Exo', sans-serif" font-size="9" font-weight="500" fill="#000000">
+                                blair@r13.ai
+                            </text>
+
+                            <!-- Website Icon and URL -->
+                            <image href="icons/Globe.svg" x="17" y="120.5" width="10" height="10"/>
+                            <text id="card-website" x="32" y="128" font-family="'Exo', sans-serif" font-size="9" font-weight="500" fill="#000000">
+                                www.r13.ai
+                            </text>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Back Card Preview -->
+                <h2 class="text-xl font-semibold dark-heading border-b dark-border pb-2 mb-4 mt-6">Back (QR Code)</h2>
+                <div class="back-card-container">
+                    <div id="svg-output-back" class="svg-preview rounded-lg overflow-hidden shadow-2xl">
+                        <svg id="business-card-back-svg" viewBox="0 0 90 55" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                            <!-- Back SVG Background -->
+                            <image href="r13-bc-back-bg.png" width="90" height="55" preserveAspectRatio="xMidYMid slice"/>
+                            <!-- QR Code will be embedded here -->
+                            <image id="qr-code-image" x="27.5" y="10" width="35" height="35" href=""/>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-4 bg-red-900/30 rounded-lg border border-red-800">
+                    <p class="font-bold text-sm text-red-400">R13 Business Card Generator</p>
+                    <p class="text-xs text-red-300 mt-1">
+                        Edit the fields above to customize the business card. The preview updates in real-time.
+                    </p>
+                    <p class="text-xs text-red-300 mt-2">
+                        The QR code on the back contains a vCard - scan to add contact.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Hidden QR code generator -->
+    <div id="qr-generator"></div>
+
+    <script>
+        const editor = {
+            // Mapping of input IDs to corresponding SVG element IDs and attribute
+            elements: {
+                'input-name': { svgId: 'card-name', attribute: 'textContent' },
+                'input-title': { svgId: 'card-title', attribute: 'textContent' },
+                'input-phone': { svgId: 'card-phone', attribute: 'textContent' },
+                'input-email': { svgId: 'card-email', attribute: 'textContent' },
+                'input-website': { svgId: 'card-website', attribute: 'textContent' }
+            },
+
+            qrCode: null,
+            qrDataUrl: null,
+            frontBgDataUrl: null,
+            backBgDataUrl: null,
+            phoneIconDataUrl: null,
+            mailIconDataUrl: null,
+            globeIconDataUrl: null,
+
+            async init() {
+                this.downloadButton = document.getElementById('download-btn');
+                this.qrContainer = document.getElementById('qr-generator');
+
+                // Attach event listeners FIRST so UI is responsive even if loading fails
+                Object.keys(this.elements).forEach(inputId => {
+                    const inputElement = document.getElementById(inputId);
+                    if (inputElement) {
+                        inputElement.addEventListener('input', () => {
+                            this.updateSvg(inputElement);
+                            this.updateQRCode();
+                        });
+                    }
+                });
+
+                // Attach event listeners to QR styling controls
+                const qrControls = ['qr-dot-style', 'qr-corner-square', 'qr-corner-dot', 'qr-color'];
+                qrControls.forEach(controlId => {
+                    const control = document.getElementById(controlId);
+                    if (control) {
+                        control.addEventListener('change', () => this.updateQRCode());
+                        control.addEventListener('input', () => this.updateQRCode());
+                    }
+                });
+
+                this.downloadButton.addEventListener('click', () => this.downloadPngs());
+
+                // Theme toggle
+                const themeToggle = document.getElementById('theme-toggle');
+                themeToggle.addEventListener('click', () => this.toggleTheme());
+
+                // Initial update on load to reflect default values
+                this.initialUpdate();
+
+                // Load resources (don't let failures break the app)
+                try {
+                    await this.loadBackgroundSvgs();
+                    await this.loadIconSvgs();
+                } catch (error) {
+                    console.error('Failed to load backgrounds:', error);
+                }
+
+                // Generate initial QR code
+                this.updateQRCode();
+            },
+
+            // Load icon SVGs as data URLs
+            async loadIconSvgs() {
+                try {
+                    // Fetch phone icon
+                    const phoneResponse = await fetch('icons/Phone.svg');
+                    if (phoneResponse.ok) {
+                        const phoneBlob = await phoneResponse.blob();
+                        this.phoneIconDataUrl = await this.blobToDataUrl(phoneBlob);
+                    }
+
+                    // Fetch mail icon
+                    const mailResponse = await fetch('icons/Mail.svg');
+                    if (mailResponse.ok) {
+                        const mailBlob = await mailResponse.blob();
+                        this.mailIconDataUrl = await this.blobToDataUrl(mailBlob);
+                    }
+
+                    // Fetch globe icon
+                    const globeResponse = await fetch('icons/Globe.svg');
+                    if (globeResponse.ok) {
+                        const globeBlob = await globeResponse.blob();
+                        this.globeIconDataUrl = await this.blobToDataUrl(globeBlob);
+                    }
+
+                } catch (error) {
+                    console.error('Error loading icon SVGs:', error);
+                }
+            },
+
+            // Load background SVGs as data URLs using fetch
+            async loadBackgroundSvgs() {
+                // Check if running from file:// protocol
+                if (window.location.protocol === 'file:') {
+                    console.warn('Running from file:// protocol - fetch may not work. Please use a local server.');
+                    return;
+                }
+
+                try {
+                    const frontResponse = await fetch('r13-bc-front-bg.png');
+                    if (frontResponse.ok) {
+                        const frontBlob = await frontResponse.blob();
+                        this.frontBgDataUrl = await this.blobToDataUrl(frontBlob);
+                    } else {
+                        console.error('Failed to fetch front background:', frontResponse.status);
+                    }
+
+                    const backResponse = await fetch('r13-bc-back-bg.png');
+                    if (backResponse.ok) {
+                        const backBlob = await backResponse.blob();
+                        this.backBgDataUrl = await this.blobToDataUrl(backBlob);
+                    } else {
+                        console.error('Failed to fetch back background:', backResponse.status);
+                    }
+                } catch (error) {
+                    console.error('Error loading backgrounds:', error);
+                }
+            },
+
+            // Convert blob to data URL
+            blobToDataUrl(blob) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            },
+
+            // Toggle light/dark mode
+            toggleTheme() {
+                const body = document.body;
+                const moonIcon = document.getElementById('moon-icon');
+                const sunIcon = document.getElementById('sun-icon');
+
+                body.classList.toggle('light-mode');
+
+                if (body.classList.contains('light-mode')) {
+                    moonIcon.classList.add('hidden');
+                    sunIcon.classList.remove('hidden');
+                } else {
+                    moonIcon.classList.remove('hidden');
+                    sunIcon.classList.add('hidden');
+                }
+            },
+
+            // Generate vCard string from form inputs
+            generateVCard() {
+                const name = document.getElementById('input-name').value;
+                const title = document.getElementById('input-title').value;
+                const phone = document.getElementById('input-phone').value.replace(/\s+/g, '');
+                const email = document.getElementById('input-email').value;
+                const website = document.getElementById('input-website').value;
+
+                // Split name into first and last
+                const nameParts = name.split(' ');
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ') || '';
+
+                const vCard = [
+                    'BEGIN:VCARD',
+                    'VERSION:3.0',
+                    `N:${lastName};${firstName}`,
+                    `FN:${name}`,
+                    `ORG:R13`,
+                    `TITLE:${title}`,
+                    `TEL:${phone}`,
+                    `EMAIL:${email}`,
+                    `URL:https://${website.replace(/^https?:\/\//, '')}`,
+                    'END:VCARD'
+                ].join('\n');
+
+                return vCard;
+            },
+
+            // Get QR styling options from UI
+            getQRStyleOptions() {
+                return {
+                    dotType: document.getElementById('qr-dot-style').value,
+                    cornerSquareType: document.getElementById('qr-corner-square').value,
+                    cornerDotType: document.getElementById('qr-corner-dot').value,
+                    color: document.getElementById('qr-color').value
+                };
+            },
+
+            // Update QR code with styling
+            updateQRCode() {
+                // Check if QRCodeStyling is available
+                if (typeof QRCodeStyling === 'undefined') {
+                    console.error('QRCodeStyling library not loaded');
+                    return;
+                }
+
+                const vCard = this.generateVCard();
+                const styleOptions = this.getQRStyleOptions();
+
+                // Clear previous QR code
+                if (this.qrContainer) {
+                    this.qrContainer.innerHTML = '';
+                }
+
+                // Create styled QR code at high resolution for sharp exports
+                this.qrCode = new QRCodeStyling({
+                    width: 2048,
+                    height: 2048,
+                    type: 'canvas',
+                    data: vCard,
+                    dotsOptions: {
+                        type: styleOptions.dotType,
+                        color: styleOptions.color
+                    },
+                    cornersSquareOptions: {
+                        type: styleOptions.cornerSquareType,
+                        color: styleOptions.color
+                    },
+                    cornersDotOptions: {
+                        type: styleOptions.cornerDotType,
+                        color: styleOptions.color
+                    },
+                    backgroundOptions: {
+                        color: 'transparent'
+                    },
+                    qrOptions: {
+                        errorCorrectionLevel: 'M'
+                    }
+                });
+
+                // Append to container
+                if (this.qrContainer) {
+                    this.qrCode.append(this.qrContainer);
+                }
+
+                // Wait for render then extract from canvas
+                setTimeout(() => {
+                    const canvas = this.qrContainer?.querySelector('canvas');
+                    if (canvas) {
+                        try {
+                            const qrDataUrl = canvas.toDataURL('image/png');
+                            this.qrDataUrl = qrDataUrl;
+                            const qrImage = document.getElementById('qr-code-image');
+                            if (qrImage) {
+                                qrImage.setAttribute('href', qrDataUrl);
+                            }
+                        } catch (e) {
+                            console.error('Failed to extract QR from canvas:', e);
+                        }
+                    } else {
+                        console.error('QR canvas not found in container');
+                    }
+                }, 150);
+            },
+
+            // Updates the SVG element based on the input
+            updateSvg(inputElement) {
+                const inputId = inputElement.id;
+                const { svgId, attribute } = this.elements[inputId];
+                const svgElement = document.getElementById(svgId);
+                svgElement[attribute] = inputElement.value;
+            },
+
+            // Runs the update function for all fields on load
+            initialUpdate() {
+                Object.keys(this.elements).forEach(inputId => {
+                    const inputElement = document.getElementById(inputId);
+                    if (inputElement) {
+                        this.updateSvg(inputElement);
+                    }
+                });
+            },
+
+            // Load image from data URL
+            loadImage(dataUrl) {
+                return new Promise((resolve, reject) => {
+                    if (!dataUrl) {
+                        reject(new Error('No data URL provided'));
+                        return;
+                    }
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = (e) => {
+                        console.error('Image load error:', e);
+                        reject(new Error('Failed to load image'));
+                    };
+                    img.src = dataUrl;
+                });
+            },
+
+            // Render front card to canvas - draws text directly for reliable font rendering
+            async renderFrontCard(width, height, scale = 4) {
+                const canvas = document.createElement('canvas');
+                canvas.width = width * scale;
+                canvas.height = height * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.scale(scale, scale);
+
+                // Draw background
+                if (this.frontBgDataUrl) {
+                    try {
+                        const bgImg = await this.loadImage(this.frontBgDataUrl);
+                        ctx.drawImage(bgImg, 0, 0, width, height);
+                    } catch (e) {
+                        console.error('renderFrontCard: Failed to draw background:', e);
+                    }
+                }
+
+                // Draw text directly on canvas (font is already loaded in page)
+                ctx.fillStyle = '#000000';
+
+                // Name
+                ctx.font = '700 17px Exo';
+                ctx.fillText(document.getElementById('input-name').value, 17, 28);
+
+                // Title
+                ctx.font = '400 9px Exo';
+                ctx.fillText(document.getElementById('input-title').value, 17, 41);
+
+                // Phone icon
+                if (this.phoneIconDataUrl) {
+                    try {
+                        const phoneIcon = await this.loadImage(this.phoneIconDataUrl);
+                        ctx.drawImage(phoneIcon, 17, 82.5, 10, 10);
+                    } catch (e) {
+                        console.error('Failed to draw phone icon:', e);
+                    }
+                }
+
+                // Phone text
+                ctx.font = '500 9px Exo';
+                ctx.fillText(document.getElementById('input-phone').value, 32, 92);
+
+                // Email icon
+                if (this.mailIconDataUrl) {
+                    try {
+                        const mailIcon = await this.loadImage(this.mailIconDataUrl);
+                        ctx.drawImage(mailIcon, 17, 100.5, 10, 10);
+                    } catch (e) {
+                        console.error('Failed to draw mail icon:', e);
+                    }
+                }
+
+                // Email text
+                ctx.fillText(document.getElementById('input-email').value, 32, 110);
+
+                // Website icon
+                if (this.globeIconDataUrl) {
+                    try {
+                        const globeIcon = await this.loadImage(this.globeIconDataUrl);
+                        ctx.drawImage(globeIcon, 17, 120.5, 10, 10);
+                    } catch (e) {
+                        console.error('Failed to draw globe icon:', e);
+                    }
+                }
+
+                // Website text
+                ctx.fillText(document.getElementById('input-website').value, 32, 128);
+
+                return canvas.toDataURL('image/png', 1.0);
+            },
+
+            // Render back card to canvas
+            async renderBackCard(width, height, scale = 4) {
+                const canvas = document.createElement('canvas');
+                canvas.width = width * scale;
+                canvas.height = height * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.scale(scale, scale);
+
+                // Draw background
+                if (this.backBgDataUrl) {
+                    try {
+                        const bgImg = await this.loadImage(this.backBgDataUrl);
+                        ctx.drawImage(bgImg, 0, 0, width, height);
+                    } catch (e) {
+                        console.error('renderBackCard: Failed to draw background:', e);
+                    }
+                }
+
+                // Draw QR code (scaled for 2048x1248 export from 90x55 viewBox)
+                if (this.qrDataUrl) {
+                    try {
+                        const qrImg = await this.loadImage(this.qrDataUrl);
+                        // Original coords: x=27.5, y=10, w=35, h=35 in 90x55 viewBox
+                        // Scale to 2048x1248: multiply by (2048/90) for x,w and (1248/55) for y,h
+                        const scaleX = width / 90;
+                        const scaleY = height / 55;
+                        ctx.drawImage(qrImg, 27.5 * scaleX, 10 * scaleY, 35 * scaleX, 35 * scaleY);
+                    } catch (e) {
+                        console.error('renderBackCard: Failed to draw QR code:', e);
+                    }
+                }
+
+                return canvas.toDataURL('image/png', 1.0);
+            },
+
+            // Download a PNG file
+            downloadPng(dataUrl, filename) {
+                if (!dataUrl || dataUrl.length < 100) {
+                    console.error('downloadPng: Invalid data URL');
+                    return;
+                }
+                const a = document.createElement('a');
+                a.download = filename;
+                a.href = dataUrl;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            },
+
+            // Handles the download of both front and back as PNG
+            async downloadPngs() {
+                const fileName = document.getElementById('input-name').value.replace(/\s+/g, '_').toLowerCase();
+
+                // Disable button during export
+                this.downloadButton.disabled = true;
+                this.downloadButton.textContent = 'Exporting...';
+
+                try {
+                    // Check if backgrounds are loaded
+                    if (!this.frontBgDataUrl || !this.backBgDataUrl) {
+                        await this.loadBackgroundSvgs();
+                    }
+
+                    // Ensure QR code is generated
+                    if (!this.qrDataUrl) {
+                        this.updateQRCode();
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+
+                    // Render and download front card (256x156 viewBox, scaled 8x for 2048x1248 resolution)
+                    const frontPng = await this.renderFrontCard(256, 156, 8);
+                    this.downloadPng(frontPng, `business_card_${fileName}_front.png`);
+
+                    // Small delay between downloads
+                    await new Promise(resolve => setTimeout(resolve, 300));
+
+                    // Render and download back card (2048x1248 resolution to match front)
+                    const backPng = await this.renderBackCard(2048, 1248, 1);
+                    this.downloadPng(backPng, `business_card_${fileName}_back.png`);
+                } catch (error) {
+                    console.error('Failed to export PNG:', error);
+                    alert('Export failed: ' + error.message);
+                } finally {
+                    // Re-enable button
+                    this.downloadButton.disabled = false;
+                    this.downloadButton.innerHTML = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Download Front & Back PNG';
+                }
+            }
+        };
+
+        // Initialize the editor when the document is fully loaded
+        document.addEventListener('DOMContentLoaded', () => editor.init());
+    </script>
+</body>
+</html>
