@@ -137,10 +137,10 @@
                            class="p-3 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500 transition duration-150">
                 </div>
 
-                <!--  Input -->
+                <!-- Phone Input -->
                 <div class="flex flex-col">
-                    <label for="input-" class="text-sm font-medium dark-label mb-1"> Number</label>
-                    <input type="tel" id="input-" value="+61 481 255 653" placeholder="+61 XXX XXX XXX"
+                    <label for="input-phone" class="text-sm font-medium dark-label mb-1">Phone Number</label>
+                    <input type="tel" id="input-phone" value="+61 481 255 653" placeholder="+61 XXX XXX XXX"
                            class="p-3 border rounded-lg dark-input focus:ring-blue-500 focus:border-blue-500 transition duration-150">
                 </div>
 
@@ -235,9 +235,9 @@
                                 Director
                             </text>
 
-                            <!--  Icon and Number -->
-                            <image href="icons/.svg" x="17" y="82.5" width="10" height="10"/>
-                            <text id="card-" x="32" y="92" font-family="'Exo', sans-serif" font-size="9" font-weight="500" fill="#000000">
+                            <!-- Phone Icon and Number -->
+                            <image href="icons/Phone.svg" x="17" y="82.5" width="10" height="10"/>
+                            <text id="card-phone" x="32" y="92" font-family="'Exo', sans-serif" font-size="9" font-weight="500" fill="#000000">
                                 +61 481 255 653
                             </text>
 
@@ -292,7 +292,7 @@
             elements: {
                 'input-name': { svgId: 'card-name', attribute: 'textContent' },
                 'input-title': { svgId: 'card-title', attribute: 'textContent' },
-                'input-': { svgId: 'card-', attribute: 'textContent' },
+                'input-phone': { svgId: 'card-phone', attribute: 'textContent' },
                 'input-email': { svgId: 'card-email', attribute: 'textContent' },
                 'input-website': { svgId: 'card-website', attribute: 'textContent' }
             },
@@ -301,7 +301,7 @@
             qrDataUrl: null,
             frontBgDataUrl: null,
             backBgDataUrl: null,
-            IconDataUrl: null,
+            phoneIconDataUrl: null,
             mailIconDataUrl: null,
             globeIconDataUrl: null,
 
@@ -354,7 +354,7 @@
             // Load icon SVGs as data URLs
             async loadIconSvgs() {
                 try {
-                    // Fetch  icon
+                    // Fetch phone icon
                     const phoneResponse = await fetch('./icons/Phone.svg');
                     if (phoneResponse.ok) {
                         const phoneBlob = await phoneResponse.blob();
